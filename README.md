@@ -21,4 +21,4 @@ Script đa chức năng cho Roblox: Fly, chỉnh Speed, Jump Power, Aimbot (near
 
 ## Credits
 - Tác giả: [Lonmethgkhoi](https://github.com/Lonmethgkhoi)
-- Script hỗ trợ bởi Copilot
+
