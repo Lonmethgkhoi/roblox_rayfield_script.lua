@@ -1,0 +1,112 @@
+-- Roblox Multi-Function Script: Fly, Speed, JumpPower, Aimbot (nearest/FOV)
+-- Author: Lonmethgkhoi & ChatGPT Copilot
+
+-- SETTINGS
+local flyKey = Enum.KeyCode.F
+local flySpeed = 60
+
+local walkSpeed = 16
+local jumpPower = 50
+
+local aimbotEnabled = false
+local aimbotType = "nearest" -- "nearest" or "fov"
+local aimbotFOV = 60
+
+-- ==== FLY ====
+local flying = false
+local user = game.Players.LocalPlayer
+local chr = user.Character or user.CharacterAdded:Wait()
+local hum = chr:WaitForChild("Humanoid")
+local root = chr:WaitForChild("HumanoidRootPart")
+
+function startFly()
+    flying = true
+    local bv = Instance.new("BodyVelocity")
+    bv.MaxForce = Vector3.new(1,1,1)*math.huge
+    bv.Parent = root
+    while flying do
+        bv.Velocity = (user:GetMouse().Hit.p - root.Position).unit * flySpeed
+        game:GetService("RunService").Heartbeat:Wait()
+    end
+    bv:Destroy()
+end
+
+function stopFly()
+    flying = false
+end
+
+user:GetMouse().KeyDown:Connect(function(key)
+    if key:lower() == flyKey.Name:lower() then
+        if not flying then
+            startFly()
+        else
+            stopFly()
+        end
+    end
+end)
+
+-- ==== SPEED ====
+hum:GetPropertyChangedSignal("WalkSpeed"):Connect(function()
+    if hum.WalkSpeed ~= walkSpeed then
+        hum.WalkSpeed = walkSpeed
+    end
+end)
+hum.WalkSpeed = walkSpeed
+
+-- ==== JUMPPOWER ====
+hum:GetPropertyChangedSignal("JumpPower"):Connect(function()
+    if hum.JumpPower ~= jumpPower then
+        hum.JumpPower = jumpPower
+    end
+end)
+hum.JumpPower = jumpPower
+
+-- ==== AIMBOT ====
+local cam = workspace.CurrentCamera
+
+function getNearestEnemy()
+    local players = game.Players:GetPlayers()
+    local closest, dist = nil, math.huge
+    for _,plr in ipairs(players) do
+        if plr ~= user and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+            local pos = plr.Character.HumanoidRootPart.Position
+            local screenPos, onScreen = cam:WorldToViewportPoint(pos)
+            if onScreen then
+                local mousePos = Vector2.new(user:GetMouse().X, user:GetMouse().Y)
+                local diff = (Vector2.new(screenPos.X, screenPos.Y) - mousePos).magnitude
+                if aimbotType == "nearest" and diff < dist then
+                    closest, dist = plr, diff
+                elseif aimbotType == "fov" and diff < aimbotFOV and diff < dist then
+                    closest, dist = plr, diff
+                end
+            end
+        end
+    end
+    return closest
+end
+
+function aimbotLoop()
+    while aimbotEnabled do
+        local target = getNearestEnemy()
+        if target and target.Character and target.Character:FindFirstChild("Head") then
+            local headPos = target.Character.Head.Position
+            cam.CFrame = CFrame.new(cam.CFrame.p, headPos)
+        end
+        task.wait(0.01)
+    end
+end
+
+-- Toggle aimbot with key "E"
+user:GetMouse().KeyDown:Connect(function(key)
+    if key == "e" then
+        aimbotEnabled = not aimbotEnabled
+        if aimbotEnabled then
+            print("Aimbot ON")
+            aimbotLoop()
+        else
+            print("Aimbot OFF")
+        end
+    end
+end)
+
+print("Loaded: Fly, Speed, JumpPower, Aimbot! Author: Lonmethgkhoi")
